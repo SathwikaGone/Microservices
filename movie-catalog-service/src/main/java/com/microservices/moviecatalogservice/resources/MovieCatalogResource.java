@@ -2,10 +2,9 @@ package com.microservices.moviecatalogservice.resources;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.Arrays;
+
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.web.reactive.function.client.WebClientAutoConfiguration;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -14,7 +13,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import com.microservices.moviecatalogservice.models.CatalogItem;
 import com.microservices.moviecatalogservice.models.Movie;
-import com.microservices.moviecatalogservice.models.Rating;
+import com.microservices.moviecatalogservice.models.UserRating;
 
 @RestController
 @RequestMapping("/catalog")
@@ -23,46 +22,38 @@ public class MovieCatalogResource {
 	@Autowired
 	private RestTemplate restTemplate;
 	
-	@Autowired
-	private WebClient.Builder webClientBuilder;
+//	@Autowired
+//	private WebClient.Builder webClientBuilder;
 
-	
 	@RequestMapping("/{userId}")
 	public List<CatalogItem> getCatalog(@PathVariable("userId") String userId){
 			
-		
 		//get all rated movieIds
-		List<Rating> ratingsList= Arrays.asList(
-				new Rating("1234", 4),
-				new Rating("1235", 3),
-				new Rating("1236", 2),
-				new Rating("1237", 5)
-				);
+		UserRating ratingsList= restTemplate.getForObject("http://localhost:8083/rating/users/"+ userId, UserRating.class);
 		
-		// for each movieId, call movie info service and get details
-		
-		return	ratingsList.stream().map(rating -> {
-		//	Movie movie = restTemplate.getForObject("http://localhost:8082/movies/" + rating.getMovieId()   , Movie.class);
-		
-			Movie movie =webClientBuilder.build()
-					.get()
-					.uri("http://localhost:8082/movies/" + rating.getMovieId())
-					.retrieve()
-					.bodyToMono(Movie.class)
-					.block();			
+		return	ratingsList.getUserRatings().stream().map(rating -> {
+			// for each movieId, call movie info service and get details
+			Movie movie = restTemplate.getForObject("http://localhost:8082/movies/" + rating.getMovieId()   , Movie.class);
 			
+			//put them all together
 			return new CatalogItem( movie.getName(), "desc", rating.getRating());
-			
 
-			//return Collections.singletonList(
-			//new CatalogItem( "Athadu", "Test", 4));
 		})
 		.collect(Collectors.toList());
-		//put them all together
-	
 	}
-
 }
+
+
+//return Collections.singletonList(
+//new CatalogItem( "Athadu", "Test", 4));
+
+// Web client 
+//Movie movie =webClientBuilder.build()
+//		.get()
+//		.uri("http://localhost:8082/movies/" + rating.getMovieId())
+//		.retrieve()
+//		.bodyToMono(Movie.class)
+//		.block();	
 
 
 
