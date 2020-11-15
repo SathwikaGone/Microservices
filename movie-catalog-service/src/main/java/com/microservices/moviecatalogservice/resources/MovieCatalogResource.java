@@ -14,6 +14,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import com.microservices.moviecatalogservice.models.CatalogItem;
 import com.microservices.moviecatalogservice.models.Movie;
 import com.microservices.moviecatalogservice.models.UserRating;
+import com.netflix.discovery.DiscoveryClient;
 
 @RestController
 @RequestMapping("/catalog")
@@ -22,6 +23,11 @@ public class MovieCatalogResource {
 	@Autowired
 	private RestTemplate restTemplate;
 	
+//	Can get the all the instances and use whenever it is required
+//  It has list of instances
+//	@Autowired
+//	private DiscoveryClient discoveryClient;
+		
 //	@Autowired
 //	private WebClient.Builder webClientBuilder;
 
@@ -29,11 +35,11 @@ public class MovieCatalogResource {
 	public List<CatalogItem> getCatalog(@PathVariable("userId") String userId){
 			
 		//get all rated movieIds
-		UserRating ratingsList= restTemplate.getForObject("http://localhost:8083/rating/users/"+ userId, UserRating.class);
+		UserRating ratingsList= restTemplate.getForObject("http://rating-data-service/rating/users/"+ userId, UserRating.class);
 		
 		return	ratingsList.getUserRatings().stream().map(rating -> {
 			// for each movieId, call movie info service and get details
-			Movie movie = restTemplate.getForObject("http://localhost:8082/movies/" + rating.getMovieId()   , Movie.class);
+			Movie movie = restTemplate.getForObject("http://movie-info-service/movies/" + rating.getMovieId()   , Movie.class);
 			
 			//put them all together
 			return new CatalogItem( movie.getName(), "desc", rating.getRating());
