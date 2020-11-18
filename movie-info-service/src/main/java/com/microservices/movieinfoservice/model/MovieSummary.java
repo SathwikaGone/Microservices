@@ -2,7 +2,6 @@ package com.microservices.movieinfoservice.model;
 
 public class MovieSummary {
 
-	
 		private String id;
 	    private String title;
 	    private String overview;
